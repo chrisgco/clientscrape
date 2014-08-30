@@ -6,23 +6,23 @@ var cheerio = require('cheerio');
 
 
 /* GET home page. */
-router.get('/:type/:num', function(req, res) {
+router.get('/:type', function(req, res) {
 	var type = req.param("type");
-	var num = req.param("num");
+	//var num = req.param("num");
 
-	var root = 'http://www.yellowpages.com/';
-	var city = 'new-york-ny/';
+	var root = 'http://www.yellowpages.com';
+	var city = '/new-york-ny';
+	var page = '?page='
+	var count = 0;
 
-	var url = root + city + type;
+	var url = root + city + "/" +type;
 
-	var data = {};
-
-	request(root, function(err, res, html){
-		if (err) console.
+	request(url, function(err, res, html){
+		if (err) {
+			console.log(err)
+		}
 		else {
 			var $ = cheerio.load(html);
-
-			console.log($("div.v-card").length);
 
 			$("div.v-card").each(function(index, element){
 				var links = [];
@@ -34,67 +34,40 @@ router.get('/:type/:num', function(req, res) {
 				})
 
 				if (links && links.indexOf('Website') == -1) {
-					console.log(index + " " + name + " " + detail);
 					if(detail) {
-						request(url + detail, function(err, res, html){
-							if (err) console.log(err)
+
+						request(root + detail, function(err, res, html){
+							if (err) {
+								console.log(err)
+							}
 							else {
 								var $$ = cheerio.load(html);
-								var phone = $$("#main-content div.bottom-section section.contact-gallery div.contact p.phone").text();
-								var email = $$("#main-content div.bottom-section footer a.email-business").attr("href").splice(6);
+								var phone = $$("#main-content div.bottom-section section.contact-gallery div.contact p.phone").text() ? $$("#main-content div.bottom-section section.contact-gallery div.contact p.phone").text() : null;
+								var email = $$("#main-content div.bottom-section footer a.email-business").attr("href") ? $$("#main-content div.bottom-section footer a.email-business").attr("href").slice(7) : null;
+								var toprint = "\"" + name + "\"";
 								if (email || phone) {
-									
+									if (email) toprint += "," + email
+									else toprint += ","
+									if (phone) toprint += "," + phone
+									else toprint += ","
+									toprint += "\n"
+									fs.appendFile('output.csv', toprint, function(err){
+        								console.log('Line successfully written! - ' + toprint);
+        								count++;
+        							})
+
 								}
-
-
 							}
 						})
+
 					}
 
 				}
 			})
-
 			
-
-
-			/*
-			var title, release, rating;
-			var json = { title : "", release : "", rating : ""};
-
-			$('.header').filter(function(){
-		        var data = $(this);
-		        title = data.children().first().text();            
-                release = data.children().last().children().text();
-
-		        json.title = title;
-                json.release = release;
-	        })
-
-            $('.star-box-giga-star').filter(function(){
-	        	var data = $(this);
-	        	rating = data.text();
-
-	        	json.rating = rating;
-	        })
-		}
-        // To write to the system we will use the built in 'fs' library.
-        // In this example we will pass 3 parameters to the writeFile function
-        // Parameter 1 :  output.json - this is what the created filename will be called
-        // Parameter 2 :  JSON.stringify(json, null, 4) - the data to write, here we do an extra step by calling JSON.stringify to make our JSON easier to read
-        // Parameter 3 :  callback function - a callback function to let us know the status of our function
-
-        fs.writeFile('output.json', JSON.stringify(json, null, 4), function(err){
-
-        	console.log('File successfully written! - Check your project directory for the output.json file');
-
-        })*/
-
-        // Finally, we'll just send out a message to the browser reminding you that this app does not have a UI.
-        res.send('Check your console!')
-       }
-
-     })
-	
+    	}
+    });
+	res.send("Ummm...");
 });
 
 module.exports = router;
